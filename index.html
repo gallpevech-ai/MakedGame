@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Make it Game</title>
+<style>
+body { font-family: Arial, sans-serif; background: #000; color: #fff; margin:0; padding:0; }
+nav { display: flex; background: #111; justify-content: space-around; padding: 10px; position: fixed; bottom:0; width:100%; }
+nav button { padding: 10px 20px; font-size:16px; cursor:pointer; }
+.content { display:none; padding: 20px; margin-bottom:60px; }
+#gameCanvas { display:block; margin: 50px auto; background: #000; border-radius:50%; }
+button { margin:5px; font-size:16px; }
+#levels ul { list-style:none; padding:0; }
+#top100 div { max-height:300px; overflow-y:auto; }
+.meteor { position:absolute; width:20px; height:20px; border-radius:50%; background:orange; box-shadow: 0 0 10px yellow; }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas" width="400" height="400"></canvas>
+
+<!-- Вкладки -->
+<div id="profile" class="content">
+  <h2>Профиль</h2>
+  <p>Никнейм: Игрок1</p>
+  <p>Монеты: <span id="coins">0</span></p>
+  <p>Клики: <span id="clicks">0</span></p>
+  <p>Мир: <span id="currentWorld">Земля</span></p>
+</div>
+
+<div id="shop" class="content">
+  <h2>Магазин</h2>
+  <button onclick="buyClick(1,5)">+1 клик — 5 монет</button>
+  <button onclick="buyClick(5,50)">+5 кликов — 50 монет</button>
+  <button onclick="buyClick(10,1000)">+10 кликов — 1000 монет</button>
+  <button onclick="buyClick(50,5000)">+50 кликов — 5000 монет</button>
+  <button onclick="buyClick(100,10000)">+100 кликов — 10000 монет</button>
+  <button onclick="buyClick(1000,1000000)">+1000 кликов — 1 000 000 монет</button>
+</div>
+
+<div id="donate" class="content">
+  <h2>Донаты</h2>
+  <p>Мегакейс 20 ₽ — 10 000 до 300 000 монет</p>
+  <p>Ультра кейс 50 ₽ — 100 000 до 5 000 000 монет</p>
+  <p>Автокликер: 30 мин — 10 ₽, 1 час — 15 ₽, 12 часов — 30 ₽, 24 часа — 50 ₽</p>
+</div>
+
+<div id="tasks" class="content">
+  <h2>Задания</h2>
+  <p>1. Подпишитесь на канал — 10 000 монет</p>
+  <p>2. Пригласите 1 друга — 1 000 монет</p>
+  <p>3. Пригласите 5 друзей — 5 000 монет</p>
+</div>
+
+<div id="top" class="content">
+  <h2>Топ-3 игроков</h2>
+  <p>1. Игрок1 — 5 000 000</p>
+  <p>2. Игрок2 — 3 500 000</p>
+  <p>3. Игрок3 — 2 000 000</p>
+</div>
+
+<div id="top100" class="content">
+  <h2>Топ-100 игроков</h2>
+  <div>
+    <ol>
+      <li>Игрок1 — 5 000 000</li>
+      <li>Игрок2 — 3 500 000</li>
+      <li>Игрок3 — 2 000 000</li>
+      <!-- Остальные можно добавить динамически -->
+      <li>Игрок100 — 1 000</li>
+    </ol>
+  </div>
+</div>
+
+<div id="levels" class="content">
+  <h2>Уровни</h2>
+  <ul>
+    <li>🌍 Земля — 1 000 000 монет</li>
+    <li>🌙 Луна — 5 000 000 монет</li>
+    <li>♀ Венера — 15 000 000 монет</li>
+    <li>♂ Марс — 30 000 000 монет</li>
+    <li>♃ Юпитер — 50 000 000 монет</li>
+    <li>♄ Сатурн — 250 000 000 монет</li>
+    <li>♅ Уран — 500 000 000 монет</li>
+    <li>♆ Нептун — 1 000 000 000 монет</li>
+    <li>☀ Солнце — 5 000 000 000 монет</li>
+    <li>🌌 Галактика — 100 000 000 000 монет</li>
+    <li>🪐 Вселенная — 1 000 000 000 000 монет</li>
+  </ul>
+</div>
+
+<!-- Меню -->
+<nav>
+  <button onclick="showTab('profile')">Профиль</button>
+  <button onclick="showTab('shop')">Магазин</button>
+  <button onclick="showTab('donate')">Донат</button>
+  <button onclick="showTab('tasks')">Задания</button>
+  <button onclick="showTab('top')">Топ-3</button>
+  <button onclick="showTab('top100')">Топ-100</button>
+  <button onclick="showTab('levels')">Уровни</button>
+</nav>
+
+<script>
+let coins = 0;
+let clicks = 0;
+let currentWorld = 'Земля';
+let clickPower = 1;
+
+function showTab(id) {
+  document.querySelectorAll('.content').forEach(c=>c.style.display='none');
+  document.getElementById(id).style.display='block';
+}
+
+function buyClick(amount, cost) {
+  if(coins >= cost){
+    coins -= cost;
+    clicks += amount;
+    clickPower += amount;
+    document.getElementById('coins').innerText = coins;
+    document.getElementById('clicks').innerText = clicks;
+  } else alert("Недостаточно монет!");
+}
+
+// Canvas - вращение планеты и метеоры
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let angle = 0;
+
+function drawPlanet() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.translate(canvas.width/2, canvas.height/2);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.arc(0,0,100,0,Math.PI*2);
+  ctx.fillStyle='green';
+  ctx.fill();
+  ctx.restore();
+  angle += 0.01;
+}
+
+function spawnMeteor() {
+  const meteor = document.createElement('div');
+  meteor.className = 'meteor';
+  document.body.appendChild(meteor);
+  meteor.style.left = (canvas.offsetLeft + canvas.width/2 - 10) + 'px';
+  meteor.style.top = (canvas.offsetTop + canvas.height/2 - 10) + 'px';
+  let dx = (Math.random()-0.5)*10;
+  let dy = (Math.random()-0.5)*10;
+  let life = 0;
+  const interval = setInterval(()=>{
+    meteor.style.left = (meteor.offsetLeft + dx) + 'px';
+    meteor.style.top = (meteor.offsetTop + dy) + 'px';
+    life++;
+    if(life>50){ meteor.remove(); clearInterval(interval); }
+  },30);
+}
+
+canvas.addEventListener('click',()=>{
+  coins += clickPower;
+  clicks += clickPower;
+  document.getElementById('coins').innerText = coins;
+  document.getElementById('clicks').innerText = clicks;
+  spawnMeteor();
+});
+
+setInterval(drawPlanet,30);
+
+// Показать профиль по умолчанию
+showTab('profile');
+</script>
+
+</body>
+</html>
